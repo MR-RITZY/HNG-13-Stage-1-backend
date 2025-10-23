@@ -216,7 +216,7 @@ uvicorn app.main:app --reload
 
 ## Deployment
 
-- Deployed using [Railway/Heroku/AWS/etc.] at: [Your Deployment URL]
+- Deployed using [Railway] at: [Your Deployment URL]
 - Ensure all environment variables (DB, secrets) are configured in the hosting service.
 
 ---
@@ -227,6 +227,8 @@ uvicorn app.main:app --reload
 - **Web Framework:** FastAPI
 - **Database:** PostgreSQL 
 - **ORM:** SQLAlchemy
+- **Schemas/Environment Variables:** Pydantic/Pydantic-settings
+- **Dependency Injection:** Typing
 - **Parsing NLP:** Lark
 - **Hashing:** hashlib (SHA-256)
 - **Deployment:** Railway
@@ -244,5 +246,5 @@ uvicorn app.main:app --reload
 ## Author
 
 **Faruq Alabi Bashir**  
-Email: [your-email@example.com]  
-GitHub: [https://github.com/yourusername](https://github.com/yourusername)
+Email: [faruqbashir608@gmail.com](mrboffin01@gmail.com) 
+GitHub: [https://github.com/MR-RITZY](https://github.com/MR-RITZY)
