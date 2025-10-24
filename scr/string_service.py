@@ -14,7 +14,7 @@ from scr.lark_transformer import NLTransformer
 from scr.lang_analysis import preprocess_query
 from scr.lark_lang import lang
 from scr.lang_analysis import build_filters
-from scr.log import error_log  
+from scr.log import error_log
 import traceback
 
 db = Annotated[AsyncSession, Depends(get_db)]
@@ -62,46 +62,37 @@ class StringAnalysis:
         )
         return result.all()
 
-    
     async def delete_strings_by_value(self, value: str):
         result = await self.db.execute(
-            delete(StringRecord).where(StringRecord.value==value)
+            delete(StringRecord)
+            .where(StringRecord.value == value)
+            .execution_options(synchronize_session=False)
         )
-        self.db.commit()
+        await self.db.commit()
         return result.rowcount
-    
+
     async def get_strings_from_natural_lang(self, query: str):
-    
+
         try:
             cleaned = preprocess_query(query)
-            print (cleaned)
 
-            
             tree = parser.parse(cleaned)
-
-            print (tree)
 
             parsed = transformer.transform(tree)
 
-            print (parsed)
-            
             filters = build_filters(parsed, StringRecord)
 
-            print(filters)
-            
             stmt = select(StringRecord)
             if filters:
                 stmt = stmt.where(*filters)
-            
+
             results = await self.db.scalars(stmt)
             return results.all()
-            
-        except Exception as e:
-            print (cleaned)
-            print(f"Error parsing query: {e}")
-            print(f"Cleaned query: {cleaned if 'cleaned' in locals() else query}")
-            traceback.print_exc()
+
+        except Exception:
+            error_log.error("Error countered while parsing --- Unable to Parse Request")
             return None
 
-async def get_string_analysis(db:db):
-        return StringAnalysis(db)
+
+async def get_string_analysis(db: db):
+    return StringAnalysis(db)

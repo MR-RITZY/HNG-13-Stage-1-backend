@@ -1,4 +1,5 @@
 from lark import Transformer
+import re
 
 class NLTransformer(Transformer):
     
@@ -9,91 +10,93 @@ class NLTransformer(Transformer):
     def word_number_val(self, items):
         return items[0]
     
-    def one(self, _):
-        return 1
+    def one(self, _): return 1
+    def two(self, _): return 2
     
-    def two(self, _):
-        return 2
+    # Ordinals
+    def pos_1(self, _): return 1
+    def pos_2(self, _): return 2
+    def pos_3(self, _): return 3
+    def pos_4(self, _): return 4
+    def pos_5(self, _): return 5
+    def pos_6(self, _): return 6
+    def pos_7(self, _): return 7
+    def pos_8(self, _): return 8
+    def pos_9(self, _): return 9
+    def pos_10(self, _): return 10
+    def pos_last(self, _): return -1
+    
+    def cardinal(self, items):
+        """Parse 1st, 2nd, 3rd, etc."""
+        text = str(items[0])
+        match = re.match(r'(\d+)', text)
+        return int(match.group(1)) if match else 1
+    
+    def ordinal(self, items):
+        return items[0]
     
     # Multi-word adjectives
-    def at_least(self, _):
-        return "at_least"
+    def at_least(self, _): return "at_least"
+    def at_most(self, _): return "at_most"
+    def longer_than(self, _): return "longer_than"
+    def shorter_than(self, _): return "shorter_than"
+    def greater_than(self, _): return "greater_than"
+    def less_than(self, _): return "less_than"
+    def more_than(self, _): return "more_than"
+    def fewer_than(self, _): return "fewer_than"
+    def equal_to(self, _): return "equal_to"
+    def not_longer_than(self, _): return "not_longer_than"
+    def not_shorter_than(self, _): return "not_shorter_than"
     
-    def at_most(self, _):
-        return "at_most"
-    
-    def longer_than(self, _):
-        return "longer_than"
-    
-    def shorter_than(self, _):
-        return "shorter_than"
-    
-    def greater_than(self, _):
-        return "greater_than"
-    
-    def less_than(self, _):
-        return "less_than"
-    
-    def more_than(self, _):
-        return "more_than"
-    
-    def fewer_than(self, _):
-        return "fewer_than"
-    
-    def equal_to(self, _):
-        return "equal_to"
-    
-    def not_longer_than(self, _):
-        return "not_longer_than"
-    
-    def not_shorter_than(self, _):
-        return "not_shorter_than"
-    
-    # Helpers to extract strings
+    # Helpers
     def _extract_str(self, items):
         return str(items[0]) if items else None
     
-    def head(self, items):
-        return self._extract_str(items)
+    def head(self, items): return self._extract_str(items)
+    def keyword(self, items): return self._extract_str(items)
+    def adj(self, items): return self._extract_str(items)
+    def multi_word_adj(self, items): return items[0] if items else None
+    def verb_elem(self, items): return self._extract_str(items)
+    def alpha(self, items): return self._extract_str(items)
+    def letter(self, items): return self._extract_str(items)
+    def operator(self, items): return self._extract_str(items)
+    def qual_adj(self, items): return self._extract_str(items)
+    def word_number(self, items): return items[0]
+    def neg(self, items): return True
+    def conj(self, items): return self._extract_str(items)
     
-    def keyword(self, items):
-        return self._extract_str(items)
+    # Positional
+    def positional_alpha(self, items):
+        """Parse positional alpha patterns"""
+        position = None
+        alpha_type = None
+        
+        for item in items:
+            if isinstance(item, int):
+                position = item
+            elif isinstance(item, str) and item in ["vowel", "vowels", "consonant", "consonants", "alphabet", "alphabets"]:
+                alpha_type = item
+        
+        return {"type": "positional", "alpha": alpha_type, "position": position}
     
-    def adj(self, items):
-        return self._extract_str(items)
+    def positional_letter(self, items):
+        """Parse positional letter patterns"""
+        position = None
+        letter = None
+        
+        for item in items:
+            if isinstance(item, int):
+                position = item
+            elif isinstance(item, str) and len(item) == 1 and item.isalpha():
+                letter = item
+        
+        return {"type": "positional", "letter": letter, "position": position}
     
-    def multi_word_adj(self, items):
-        return items[0] if items else None
-    
-    def verb_elem(self, items):
-        return self._extract_str(items)
-    
-    def alpha(self, items):
-        return self._extract_str(items)
-    
-    def letter(self, items):
-        return self._extract_str(items)
-    
-    def operator(self, items):
-        return self._extract_str(items)
-    
-    def qual_adj(self, items):
-        return self._extract_str(items)
-    
-    def word_number(self, items):
-        return items[0]
-    
-    def neg(self, items):
-        return True
-    
-    def conj(self, items):
-        return self._extract_str(items)
-    
+    # Qualitative
     def qual_with_count(self, items):
-        """Qualitative with explicit word/character count: '2 word palindrome'"""
         qual_word = None
         count_value = None
-        count_field = "word_count"  # default
+        count_field = "word_count"
         
         for item in items:
             if isinstance(item, str):
@@ -103,16 +106,9 @@ class NLTransformer(Transformer):
                     count_field = "word_count"
                 elif item in ["character", "characters", "char", "chars", "length"]:
                     count_field = "length"
-                elif item in ["double", "pair", "couple"]:
-                    count_value = 2
-                    print(item)
-                elif item in ["single", "monoword", "mono"]:
-                    count_value = 1
-                    print(item)
-                print(count_value)
             elif isinstance(item, int):
                 count_value = item
-        print("count is none")
+        
         result = {"type": "qualitative", "qual": qual_word or "palindrome"}
         if count_value is not None:
             result[count_field] = count_value
@@ -120,13 +116,15 @@ class NLTransformer(Transformer):
         return result
     
     def qual_with_verb(self, items):
-        """Qualitative with verb: 'palindrome containing 2 words'"""
         qual_word = None
         count_value = None
-        count_field = "word_count"  # default
+        count_field = "word_count"
+        positional_data = None
         
         for item in items:
-            if isinstance(item, str):
+            if isinstance(item, dict) and item.get("type") == "positional":
+                positional_data = item
+            elif isinstance(item, str):
                 if item in ["palindromic", "palindrome", "mirror", "symmetric", "symmetrical"]:
                     qual_word = item
                 elif item in ["word", "words"]:
@@ -137,21 +135,29 @@ class NLTransformer(Transformer):
                 count_value = item
         
         result = {"type": "qualitative", "qual": qual_word or "palindrome"}
-        if count_value is not None:
+        
+        # If positional data exists, return compound condition
+        if positional_data:
+            return {
+                "type": "compound",
+                "conditions": [
+                    result,
+                    {"op": "and", "condition": {"type": "contains", "neg": False, "subtype": "positional", **positional_data}}
+                ]
+            }
+        elif count_value is not None:
             result[count_field] = count_value
         
         return result
     
-    def qual_condition(self, items):
-        """Qualitative conditions: 'palindromic', 'single palindrome'"""
+    def qual_simple(self, items):
         qual_word = None
         count_value = None
         
         for item in items:
-            if isinstance(item, str) and item in [
-                "palindromic", "palindrome", "mirror", "symmetric", "symmetrical"
-            ]:
-                qual_word = item
+            if isinstance(item, str):
+                if item in ["palindromic", "palindrome", "mirror", "symmetric", "symmetrical"]:
+                    qual_word = item
             elif isinstance(item, int):
                 count_value = item
         
@@ -161,10 +167,11 @@ class NLTransformer(Transformer):
         
         return result
     
+    def qual_condition(self, items):
+        return items[0] if items else {"type": "qualitative", "qual": "palindrome"}
     
-    
+    # Other conditions
     def comparison_condition(self, items):
-        """Parse comparison conditions"""
         number = None
         keyword = None
         adj = None
@@ -178,19 +185,11 @@ class NLTransformer(Transformer):
                     keyword = item
                 elif item in [">", ">=", "<", "<=", "==", "=", "!="]:
                     operator = item
-                elif item in ["longer", "shorter", "greater", "less", "more", "fewer", 
-                             "exactly", "just", "only", "precisely", "about", "over", "under", "long", "short",
-                             "at_least", "at_most", "longer_than", "shorter_than", "greater_than", 
-                             "less_than", "more_than", "fewer_than", "equal_to",
-                             "not_longer_than", "not_shorter_than"]:
+                else:
                     adj = item
         
-        # Determine field
-        field = "length"
-        if keyword in ["word", "words"]:
-            field = "word_count"
+        field = "word_count" if keyword in ["word", "words"] else "length"
         
-        # Determine operator - expanded map
         if operator:
             op = operator if operator != "=" else "=="
         elif adj:
@@ -211,30 +210,27 @@ class NLTransformer(Transformer):
         else:
             op = "=="
         
-        return {
-            "type": "comparison",
-            "field": field,
-            "op": op,
-            "value": number
-        }
+        return {"type": "comparison", "field": field, "op": op, "value": number}
     
     def element_condition(self, items):
-        """Parse element/containment conditions"""
         neg = False
         number = None
         keyword = None
         alpha = None
         letter = None
+        positional_data = None
         
         for item in items:
             if item is True:
                 neg = True
+            elif isinstance(item, dict) and item.get("type") == "positional":
+                positional_data = item
             elif isinstance(item, int):
                 number = item
             elif isinstance(item, str):
                 if item in ["have", "has", "having", "contain", "contains", 
                            "containing", "include", "includes", "including"]:
-                    pass  # verb, just skip
+                    pass
                 elif item in ["word", "words", "character", "characters", "char", "chars", "length"]:
                     keyword = item
                 elif item in ["vowel", "vowels", "consonant", "consonants", "alphabet", "alphabets"]:
@@ -244,31 +240,27 @@ class NLTransformer(Transformer):
         
         result = {"type": "contains", "neg": neg}
         
-        if number and keyword:
-            # "contain 3 words"
+        if positional_data:
+            result["subtype"] = "positional"
+            result.update(positional_data)
+        elif number and keyword:
             field = "word_count" if keyword in ["word", "words"] else "length"
             result["subtype"] = "count"
             result["field"] = field
             result["value"] = number
         elif alpha:
-            # "contain vowels"
             result["subtype"] = "char_class"
             result["char_class"] = alpha
         elif letter:
-            # "contain letter a"
             result["subtype"] = "letter"
             result["letter"] = letter
         
         return result
     
     def range_condition(self, items):
-        """Parse range conditions: between X and Y"""
         numbers = [item for item in items if isinstance(item, int)]
-        keyword = None
-        for item in items:
-            if isinstance(item, str) and item in ["word", "words", "character", "characters", "char", "chars", "length"]:
-                keyword = item
-                break
+        keyword = next((item for item in items if isinstance(item, str) and 
+                       item in ["word", "words", "character", "characters", "char", "chars", "length"]), None)
         
         field = "word_count" if keyword in ["word", "words"] else "length"
         return {
@@ -279,7 +271,6 @@ class NLTransformer(Transformer):
         }
     
     def length_phrase(self, items):
-        """Parse length phrases: 'of length 10', 'with length longer than 2 words'"""
         number = None
         adj = None
         operator = None
@@ -293,18 +284,10 @@ class NLTransformer(Transformer):
                     operator = item
                 elif item in ["word", "words", "character", "characters", "char", "chars", "length"]:
                     keyword = item
-                elif item in ["longer", "shorter", "greater", "less", "more", "fewer", 
-                             "exactly", "just", "only", "over", "under",
-                             "at_least", "at_most", "longer_than", "shorter_than", 
-                             "greater_than", "less_than", "more_than", "fewer_than",
-                             "not_longer_than", "not_shorter_than"]:
+                else:
                     adj = item
         
-        # Determine field based on keyword if present
-        if keyword in ["word", "words"]:
-            field = "word_count"
-        else:
-            field = "length"
+        field = "word_count" if keyword in ["word", "words"] else "length"
         
         if operator:
             op = operator if operator != "=" else "=="
@@ -323,15 +306,9 @@ class NLTransformer(Transformer):
         else:
             op = "=="
         
-        return {
-            "type": "comparison",
-            "field": field,
-            "op": op,
-            "value": number
-        }
+        return {"type": "comparison", "field": field, "op": op, "value": number}
     
     def det_number_keyword_head(self, items):
-        """Parse 'det? number keyword adj? head?' patterns like 'all 5 characters strings'"""
         number = None
         keyword = None
         adj = None
@@ -349,21 +326,14 @@ class NLTransformer(Transformer):
         op_map = {"long": ">=", "short": "<=", "exactly": "==", "just": "==", "only": "=="}
         op = op_map.get(adj, "==")
         
-        return {
-            "type": "comparison",
-            "field": field,
-            "op": op,
-            "value": number
-        }
+        return {"type": "comparison", "field": field, "op": op, "value": number}
     
     def head_only(self, items):
-        """Just return all strings (no filter)"""
         return {"type": "all"}
     
     def compound_condition(self, items):
-        """Handle multiple conditions with and/or"""
         conditions = []
-        last_op = "and"  # default
+        last_op = "and"
         
         for item in items:
             if isinstance(item, str) and item in ["and", "or", "but"]:
@@ -372,10 +342,9 @@ class NLTransformer(Transformer):
                 conditions.append({"op": last_op, "condition": item})
                 last_op = "and"
         
-        # First condition has no operator prefix
-        if conditions and len(conditions) > 0:
+        if conditions:
             first_cond = conditions[0]["condition"]
-            rest = conditions[1:] if len(conditions) > 1 else []
+            rest = conditions[1:]
             
             if rest:
                 return {"type": "compound", "conditions": [first_cond] + rest}
@@ -385,12 +354,7 @@ class NLTransformer(Transformer):
         return {"type": "all"}
     
     def single_condition(self, items):
-        """Pass through single conditions"""
         return items[0] if items else {"type": "all"}
     
     def start(self, items):
-        """Top level"""
         return items[0] if items else {"type": "all"}
-
-
-

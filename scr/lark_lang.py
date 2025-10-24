@@ -4,7 +4,7 @@ start: query
 ?query: compound_condition
       | single_condition
 
-compound_condition: single_condition ((conj | comma) single_condition)+
+compound_condition: single_condition ((conj | comma) single_condition)*
 
 single_condition: qual_condition
                 | comparison_condition
@@ -22,54 +22,74 @@ comparison_condition: det? head? multi_word_adj number keyword
                     | multi_word_adj number keyword
                     | adj number keyword
 
-// Multi-word adjectives like "at least", "longer than"
-multi_word_adj: "at" "least"        -> at_least
-              | "at" "most"         -> at_most
-              | "longer" "than"     -> longer_than
-              | "shorter" "than"    -> shorter_than
-              | "greater" "than"    -> greater_than
-              | "less" "than"       -> less_than
-              | "more" "than"       -> more_than
-              | "fewer" "than"      -> fewer_than
-              | "equal" "to"        -> equal_to
-              | "not" "longer" "than"   -> not_longer_than
-              | "not" "shorter" "than"  -> not_shorter_than
+// Multi-word adjectives
+multi_word_adj: "at" "least"             -> at_least
+              | "at" "most"              -> at_most
+              | "longer" "than"          -> longer_than
+              | "shorter" "than"         -> shorter_than
+              | "greater" "than"         -> greater_than
+              | "less" "than"            -> less_than
+              | "more" "than"            -> more_than
+              | "fewer" "than"           -> fewer_than
+              | "equal" "to"             -> equal_to
+              | "not" "longer" "than"    -> not_longer_than
+              | "not" "shorter" "than"   -> not_shorter_than
 
-// Element conditions - FIXED to handle letters properly
-element_condition: det? head? rel_pro? neg? verb_elem number keyword
+// Element conditions with full position support
+element_condition: det? head? rel_pro? neg? verb_elem positional_alpha
+                 | det? head? rel_pro? neg? verb_elem positional_letter
+                 | det? head? rel_pro? neg? verb_elem number keyword
                  | det? head? rel_pro? neg? verb_elem alpha
                  | det? head? rel_pro? neg? verb_elem "letter" letter
                  | det? head? rel_pro? neg? verb_elem letter
 
-// Range: "between 3 and 10 characters"
+// Positional patterns - COMPLETE
+positional_alpha: "the"? ordinal alpha
+                | "the"? cardinal alpha
+                | alpha "at" "the"? "position"? cardinal
+                | alpha "at" "the"? cardinal "position"
+                | alpha "in" "the"? "position"? cardinal
+                | alpha "in" "the"? cardinal "position"
+
+positional_letter: "the"? ordinal letter
+                 | "the"? cardinal letter
+                 | letter "at" "the"? "position"? cardinal
+                 | letter "at" "the"? cardinal "position"
+                 | letter "in" "the"? "position"? cardinal
+                 | letter "in" "the"? cardinal "position"
+
+// Range
 range_condition: det? head? "between" number "and" number keyword?
 
-// Length phrases: "of length 10", "with length under 5"  
+// Length phrases
 length_phrase: det? head? prep "length" multi_word_adj number keyword?
              | det? head? prep "length" adj number keyword?
              | det? head? prep "length" operator number keyword?
-             
-// Qualitative: "palindromic strings", "all single palindrome", "all 2 word palindromes"
-// Pattern 1: "all 2 word palindrome", "all double words palindrome"  
+
+// Qualitative conditions - COMPLETE
 qual_with_count: det? number keyword qual_adj head?
                | det? word_number keyword qual_adj head?
 
-// Pattern 2: "all palindrome with 2 words", "palindrome containing single word"
-qual_with_verb: det? qual_adj head? (rel_pro? verb_elem | prep) number keyword
+qual_with_verb: det? qual_adj head? (rel_pro? verb_elem | prep) positional_alpha
+              | det? qual_adj head? (rel_pro? verb_elem | prep) positional_letter
+              | det? qual_adj head? (rel_pro? verb_elem | prep) number keyword
               | det? qual_adj head? (rel_pro? verb_elem | prep) word_number keyword?
+              | det? qual_adj (rel_pro? verb_elem | prep) positional_alpha head?
+              | det? qual_adj (rel_pro? verb_elem | prep) positional_letter head?
               | det? qual_adj (rel_pro? verb_elem | prep) number keyword head?
-              | det? qual_adj head? (rel_pro? verb_elem | prep) det? number? keyword?
+              | det? qual_adj (rel_pro? verb_elem | prep) word_number keyword? head?
 
-// Pattern 3: "all palindromic single words", "all single palindrome"
+qual_simple: det? word_number keyword? qual_adj head?
+           | det? qual_adj word_number keyword? head?
+           | det? number keyword? qual_adj head?
+           | det? qual_adj number keyword? head?
+           | det? qual_adj head?
+
 qual_condition: qual_with_count
               | qual_with_verb
-              | det? word_number qual_adj head?
-              | det? qual_adj word_number head?
-              | det? number qual_adj head?
-              | det? qual_adj number head?
-              | det? qual_adj head?
+              | qual_simple
 
-// Number patterns: "10 character long string", "all 5 characters strings"
+// Number patterns
 det_number_keyword_head: det? number keyword adj? head?
 
 // Just a head noun
@@ -86,23 +106,35 @@ word_number: "single"    -> one
            | "pair"      -> two
            | "couple"    -> two
 
-cardinal: /d+(st|nd|rd|th)/
-           
-alpha: "vowel" | "vowels" | "consonant" | "consonants" 
-     | "alphabet" | "alphabets" | cardinal_alpha
+// Ordinals for positions
+ordinal: "first"         -> pos_1
+       | "second"        -> pos_2
+       | "third"         -> pos_3
+       | "fourth"        -> pos_4
+       | "fifth"         -> pos_5
+       | "sixth"         -> pos_6
+       | "seventh"       -> pos_7
+       | "eighth"        -> pos_8
+       | "ninth"         -> pos_9
+       | "tenth"         -> pos_10
+       | "last"          -> pos_last
 
-cardinal_alpha: cardinal alpha
+// Cardinals for positions
+cardinal: /\d+(st|nd|rd|th)/
 
 keyword: "character" | "characters" | "char" | "chars"
        | "word" | "words" 
-       | "length" | alpha
+       | "length"
+
+alpha: "vowel" | "vowels" | "consonant" | "consonants" 
+     | "alphabet" | "alphabets"
 
 letter: /[a-z]/
 
 det: "all" | "any" | "each" | "every" | "the" | "a" | "an"
 
 head: "string" | "strings" | "text" | "texts" 
-    | "phrase" | "phrases" | "entry" | "entries" | "word" | "words"
+    | "phrase" | "phrases" | "entry" | "entries"
 
 adj: "longer" | "shorter" | "greater" | "less" 
    | "more" | "fewer" | "exactly" | "just" 

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager, AsyncExitStack
 from typing import Annotated, Optional
 
 from scr.db import db_lifepan
-from scr.log import info_log 
+from scr.log import info_log
 from scr.schema import InsertString, ReturnString, ReturnStringList
 from scr.string_service import StringAnalysis, get_string_analysis
 from scr.exc import (
@@ -11,6 +11,7 @@ from scr.exc import (
     register_exc,
     StringNotFoundException,
     UnparsableNaturalLanguageException,
+    SystemError,
 )
 
 
@@ -36,20 +37,27 @@ async def get_string_by_nl(
     string_analysis: string_analysis,
     query: str = Query(..., description="Natural language query"),
 ):
-    string = await string_analysis.get_strings_from_natural_lang(query.lower())
-    if not string:
-        raise UnparsableNaturalLanguageException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Unable to parse natural language query -- "
-                "Bad query or String with such description doesn't in the system",
-            ),
+    try:
+        string = await string_analysis.get_strings_from_natural_lang(query.lower())
+        if not string:
+            raise UnparsableNaturalLanguageException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Unable to parse natural language query -- "
+                    "Bad query or String with such description doesn't in the system",
+                ),
+            )
+        return ReturnStringList(
+            return_list=[ReturnString(orm_string=s) for s in string]
         )
-    return ReturnStringList(
-    return_list=[ReturnString(orm_string=s) for s in string])
+    except:
+        raise SystemError(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Invalid request, system unable to parse your reques",
+        )
 
 
-@app.get("/strings", response_model= ReturnStringList)
+@app.get("/strings", response_model=ReturnStringList)
 async def get_string(
     string_analysis: string_analysis,
     length: Optional[int] = None,
@@ -93,9 +101,7 @@ async def get_string(
                 "String Not Found. " "Register string to database by POST /strings"
             ),
         )
-    return ReturnStringList(
-    return_list=[ReturnString(orm_string=s) for s in string]
-)
+    return ReturnStringList(return_list=[ReturnString(orm_string=s) for s in string])
 
 
 @app.get("/strings/{string_value}")
@@ -109,6 +115,7 @@ async def get_string(string_value: str, string_analysis: string_analysis):
             ),
         )
     return ReturnString(orm_string=string)
+
 
 @app.post("/strings", status_code=status.HTTP_201_CREATED, response_model=ReturnString)
 async def insert_new_string(strings: InsertString, string_analysis: string_analysis):
@@ -130,5 +137,3 @@ async def delete_string(string_value: str, string_analysis: string_analysis):
             detail="Can't Be Deleted -- String doesn't exists in system",
         )
     return {}
-
-

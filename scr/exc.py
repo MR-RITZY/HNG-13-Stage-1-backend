@@ -13,6 +13,8 @@ class StringNotFoundException(HTTPException):
 class UnparsableNaturalLanguageException(HTTPException):
     pass
 
+class SystemError(HTTPException):
+    pass
 
 # Generic helper
 async def exc_handler(status_code: int, content: dict):
@@ -25,6 +27,12 @@ async def natural_language(request: Request, exc: UnparsableNaturalLanguageExcep
     return await exc_handler(
         exc.status_code,
         {"error": "Unable to parse content", "detail": exc.detail},
+    )
+
+async def system_error(request: Request, exc: UnparsableNaturalLanguageException):
+    return await exc_handler(
+        exc.status_code,
+        {"error": "System Unable to Process the request", "detail": exc.detail},
     )
 
 async def string_already_exists(request: Request, exc: StringAlreadyExistsException):
@@ -107,3 +115,4 @@ def register_exc(app: FastAPI):
     app.add_exception_handler(StringNotFoundException, string_not_found)
     app.add_exception_handler(RequestValidationError, request_validation)
     app.add_exception_handler(StarletteHTTPException, starlette_validation)
+    app.add_exception_handler(SystemError, system_error)
