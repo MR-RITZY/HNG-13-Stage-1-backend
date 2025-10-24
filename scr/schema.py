@@ -4,9 +4,9 @@ from datetime import datetime
 
 
 class InsertString(BaseModel):
-    string: str
+    value: str
 
-    @field_validator("string")
+    @field_validator("value")
     def lower_string(cls, value:str):
         return value.lower()
 

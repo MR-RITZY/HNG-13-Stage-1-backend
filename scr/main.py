@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, status, Query
+from fastapi import FastAPI, Depends, status, Query, Response
 from contextlib import asynccontextmanager, AsyncExitStack
 from typing import Annotated, Optional
 
@@ -11,7 +11,7 @@ from scr.exc import (
     register_exc,
     StringNotFoundException,
     UnparsableNaturalLanguageException,
-    SystemError,
+    InternalSystemError,
 )
 
 
@@ -44,16 +44,18 @@ async def get_string_by_nl(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
                     "Unable to parse natural language query -- "
-                    "Bad query or String with such description doesn't in the system",
+                    "Bad query or String with such description doesn't exist in the system"
                 ),
             )
         return ReturnStringList(
             return_list=[ReturnString(orm_string=s) for s in string]
         )
-    except:
-        raise SystemError(
+    except UnparsableNaturalLanguageException:
+        raise
+    except Exception as e:
+        raise InternalSystemError(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Invalid request, system unable to parse your reques",
+            detail=str(e) or "System unable to parse your request",
         )
 
 
@@ -96,7 +98,7 @@ async def get_string(
     string = await string_analysis.get_strings_by_condition(conditions)
     if not string:
         raise StringNotFoundException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 "String Not Found. " "Register string to database by POST /strings"
             ),
@@ -119,7 +121,7 @@ async def get_string(string_value: str, string_analysis: string_analysis):
 
 @app.post("/strings", status_code=status.HTTP_201_CREATED, response_model=ReturnString)
 async def insert_new_string(strings: InsertString, string_analysis: string_analysis):
-    result = await string_analysis.insert_string(strings.string.lower())
+    result = await string_analysis.insert_string(strings.value.lower())
     if not result:
         raise StringAlreadyExistsException(
             status_code=status.HTTP_409_CONFLICT,
@@ -136,4 +138,4 @@ async def delete_string(string_value: str, string_analysis: string_analysis):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Can't Be Deleted -- String doesn't exists in system",
         )
-    return {}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
