@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from scr.log import info_log, error_log
 from scr.config import settings
-from scr.model import Base
+from scr import model
 
 DB_URL = (
     f"postgresql+asyncpg://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@"
@@ -27,7 +27,7 @@ async def get_db():
 async def db_lifepan():
     try:
         async with async_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(model.Base.metadata.create_all)
             info_log.info("Connected to Database")
             yield
     except Exception:

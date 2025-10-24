@@ -38,7 +38,7 @@ class Base(DeclarativeBase):
 
 class StringRecord(Base):
 
-    __tablename__ = "sting_record"
+    __tablename__ = "string_record_analysis"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     value: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
