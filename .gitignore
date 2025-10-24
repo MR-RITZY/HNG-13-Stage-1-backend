@@ -3,3 +3,5 @@ venv/
 __pycache__
 .vscode/
 virtualenv/
+poetry.lock
+pyproject.toml
