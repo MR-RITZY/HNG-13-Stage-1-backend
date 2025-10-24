@@ -74,11 +74,20 @@ class StringAnalysis:
     
         try:
             cleaned = preprocess_query(query)
+            print (cleaned)
+
             
             tree = parser.parse(cleaned)
+
+            print (tree)
+
             parsed = transformer.transform(tree)
+
+            print (parsed)
             
             filters = build_filters(parsed, StringRecord)
+
+            print(filters)
             
             stmt = select(StringRecord)
             if filters:
@@ -88,6 +97,7 @@ class StringAnalysis:
             return results.all()
             
         except Exception as e:
+            print (cleaned)
             print(f"Error parsing query: {e}")
             print(f"Cleaned query: {cleaned if 'cleaned' in locals() else query}")
             traceback.print_exc()
