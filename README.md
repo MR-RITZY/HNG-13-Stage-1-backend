@@ -54,7 +54,7 @@ Endpoints also include **full CRUD operations** and **advanced filtering**.
    - SHA-256 is used for unique string identification.
 
 2. **Data Storage**
-   - Stored in a **PostgreSQL database** (or SQLite for local testing).
+   - Stored in a **PostgreSQL database**.
    - SQLAlchemy ORM handles models and queries.
 
 3. **Filtering**
@@ -66,7 +66,7 @@ Endpoints also include **full CRUD operations** and **advanced filtering**.
    - Combined filters support multiple constraints simultaneously.
 
 4. **Natural Language Query Parsing**
-   - Implemented using **Lark** grammar and a custom **Transformer**.
+   - Implemented using **Lark** grammar and a custom **Transformer** with **Numerizer** for word to Numeral conversion.
    - Queries like `"all palindromic strings longer than 5 letters"` are parsed into SQLAlchemy filters.
    - Handles numeric constraints, boolean flags, and character heuristics.
 
@@ -231,6 +231,7 @@ uvicorn app.main:app --reload
 - **Dependency Injection:** Typing
 - **Parsing NLP:** Lark
 - **Hashing:** hashlib (SHA-256)
+- **Word to Numeral Conversion:** Numerizer
 - **Deployment:** Railway
 
 ---
