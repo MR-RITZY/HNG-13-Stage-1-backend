@@ -2,11 +2,11 @@ from fastapi import FastAPI, Depends, status, Query, Response
 from contextlib import asynccontextmanager, AsyncExitStack
 from typing import Annotated, Optional
 
-from scr.db import db_lifepan
-from scr.log import info_log
-from scr.schema import InsertString, ReturnString, ReturnStringList
-from scr.string_service import StringAnalysis, get_string_analysis
-from scr.exc import (
+from src.db import db_lifepan
+from src.log import info_log
+from src.schema import InsertString, ReturnString, ReturnStringList
+from src.string_service import StringAnalysis, get_string_analysis
+from src.exc import (
     StringAlreadyExistsException,
     register_exc,
     StringNotFoundException,
@@ -35,7 +35,7 @@ string_analysis = Annotated[StringAnalysis, Depends(get_string_analysis)]
 @app.get("/strings/filter-by-natural-language", response_model=ReturnStringList)
 async def get_string_by_nl(
     string_analysis: string_analysis,
-    query: str = Query(..., description="Natural language query"),
+    query: str = Query(..., desrciption="Natural language query"),
 ):
     try:
         string = await string_analysis.get_strings_from_natural_lang(query.lower())
@@ -44,7 +44,7 @@ async def get_string_by_nl(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
                     "Unable to parse natural language query -- "
-                    "Bad query or String with such description doesn't exist in the system"
+                    "Bad query or String with such desrciption doesn't exist in the system"
                 ),
             )
         return ReturnStringList(

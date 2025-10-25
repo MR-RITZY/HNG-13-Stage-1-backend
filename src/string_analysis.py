@@ -1,5 +1,5 @@
 from sqlalchemy import and_, or_, cast, Integer, select
-from scr.model import StringRecord
+from src.model import StringRecord
 
 
 def filter_query_by_conditions(conditions: dict):

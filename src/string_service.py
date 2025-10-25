@@ -7,15 +7,16 @@ from hashlib import sha256
 from collections import Counter
 from lark import Lark
 
-from scr.db import get_db
-from scr.model import StringRecord
-from scr.string_analysis import filter_query_by_conditions
-from scr.lark_transformer import NLTransformer
-from scr.lang_analysis import preprocess_query
-from scr.lark_lang import lang
-from scr.lang_analysis import build_filters
-from scr.log import error_log
-import traceback
+from src.db import get_db
+from src.model import StringRecord
+from src.string_analysis import filter_query_by_conditions
+from src.lark_transformer import NLTransformer
+from src.lang_analysis import preprocess_query
+from src.lark_lang import lang
+from src.lang_analysis import build_filters
+from src.log import error_log
+
+
 
 db = Annotated[AsyncSession, Depends(get_db)]
 

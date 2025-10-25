@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 from contextlib import asynccontextmanager
 
-from scr.log import info_log, error_log
-from scr.config import settings
-from scr import model
+from src.log import info_log, error_log
+from src.config import settings
+from src import model
 
 DB_URL = (
     f"postgresql+asyncpg://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@"
